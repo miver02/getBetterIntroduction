@@ -477,12 +477,12 @@
             const thead = document.createElement('thead');
             thead.innerHTML = `
                 <tr style="background-color: #f5f7fa; text-align: left;">
-                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0;">排名</th>
-                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0;">姓名</th>
-                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0;">年龄</th>
-                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0;">工作年限</th>
-                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0; text-align: center;">匹配度</th>
-                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0; text-align: center;">操作</th>
+                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0;">Rank</th>
+                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0;">Name</th>
+                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0;">Sex</th>
+                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0;">WorkYears</th>
+                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0; text-align: center;">Match</th>
+                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0; text-align: center;">Operate</th>
                 </tr>
             `;
             table.appendChild(thead);
@@ -538,7 +538,7 @@
             const modalTitle = document.getElementById('modal-title');
             const modalContent = document.getElementById('modal-content');
             
-            modalTitle.textContent = `${resume.name || '未知姓名'}的简历详情`;
+            modalTitle.textContent = `${resume.name || 'None'}的简历详情`;
             
             // 构建详情内容
             let contentHTML = '<div style="line-height: 1.8;">';
@@ -549,15 +549,15 @@
             contentHTML += '<table style="width: 100%; border-collapse: collapse;">';
             contentHTML += `
                 <tr>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee; width: 100px;">姓名</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee; width: 100px;">Name</td>
                     <td style="padding: 8px; border-bottom: 1px solid #eee;">${resume.name || 'None'}</td>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee; width: 100px;">性别</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee; width: 100px;">Gender</td>
                     <td style="padding: 8px; border-bottom: 1px solid #eee;">${resume.gender || 'None'}</td>
                 </tr>
                 <tr>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;">年龄</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">Age</td>
                     <td style="padding: 8px; border-bottom: 1px solid #eee;">${resume.age || 'None'}</td>
-                    <td style="padding: 8px; border-bottom: 1px solid #eee;">工作年限</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">WorkYears</td>
                     <td style="padding: 8px; border-bottom: 1px solid #eee;">${resume.work_years || 'None'}</td>
                 </tr>
             `;
@@ -566,35 +566,35 @@
             
             // 工作经历部分
             contentHTML += '<div style="margin-bottom: 20px;">';
-            contentHTML += '<h3 style="font-size: 1.1rem; margin-bottom: 10px;">工作经历</h3>';
-            contentHTML += `<div style="padding: 10px; background-color: #f9f9f9; border-radius: 4px;">${resume.work_experience || '无工作经历'}</div>`;
+            contentHTML += '<h3 style="font-size: 1.1rem; margin-bottom: 10px;">WorkExperience</h3>';
+            contentHTML += `<div style="padding: 10px; background-color: #f9f9f9; border-radius: 4px;">${resume.work_experience || 'No WorkExperience'}</div>`;
             contentHTML += '</div>';
             
             // 项目经历部分
             contentHTML += '<div style="margin-bottom: 20px;">';
-            contentHTML += '<h3 style="font-size: 1.1rem; margin-bottom: 10px;">项目经历</h3>';
-            contentHTML += `<div style="padding: 10px; background-color: #f9f9f9; border-radius: 4px;">${resume.project_experience || '无项目经历'}</div>`;
+            contentHTML += '<h3 style="font-size: 1.1rem; margin-bottom: 10px;">ProjectExperience</h3>';
+            contentHTML += `<div style="padding: 10px; background-color: #f9f9f9; border-radius: 4px;">${resume.project_experience || 'No ProjectExperience'}</div>`;
             contentHTML += '</div>';
             
             // 所有其他信息
             contentHTML += '<div>';
-            contentHTML += '<h3 style="font-size: 1.1rem; margin-bottom: 10px;">其他信息</h3>';
+            contentHTML += '<h3 style="font-size: 1.1rem; margin-bottom: 10px;">Other</h3>';
             contentHTML += '<table style="width: 100%; border-collapse: collapse;">';
             
             // 字段映射表，将英文键映射到中文显示
             const fieldMapping = {
-                'name': '姓名',
-                'gender': '性别',
-                'age': '年龄',
-                'work_years': '工作年限',
-                'work_experience': '工作经历',
-                'project_experience': '项目经历',
-                'education': '教育背景',
-                'skills': '技能',
-                'certifications': '证书',
-                'languages': '语言能力',
-                'email': '邮箱',
-                'phone': '电话'
+                'name': 'Name',
+                'gender': 'Gender',
+                'age': 'Age',
+                'work_years': 'WorkYears',
+                'work_experience': 'WorkExperience',
+                'project_experience': 'ProjectExperience',
+                'education': 'Education',
+                'skills': 'Skills',
+                'certifications': 'Certifications',
+                'languages': 'Languages',
+                'email': 'Email',
+                'phone': 'Phone'
             };
             
             // 显示除了已经显示过的字段外的所有其他字段

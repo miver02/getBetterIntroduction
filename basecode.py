@@ -115,14 +115,15 @@ class ConnDeepseek:
                 请严格按照以下要求返回：
                 1. 一份简历封装为一个JSON对象
                 2. 将所有简历JSON对象放在一个JSON数组中
-                3. 返回格式必须是有效的JSON，不要添加任何额外文本或说明,JSON的键必须是英文
+                3. 返回格式必须是有效的JSON，不要添加任何额外文本或说明,JSON的键必须是英文,JSON的值必须是原文件中的总结或者原文
                 4. JSON数组按照与岗位匹配度从高到低排序
+                
 
                 例如:
                 ```json
                 [
-                {{"name": "张三", "sex": "男", "age": 30, "work_years": 5, "work_experience": "...", "project_experience": "..."}},
-                {{"name": "李四", "sex": "女", "age": 28, "work_years": 3, "work_experience": "...", "project_experience": "..."}}
+                {{"name": "张三", "gender": "男", "age": 30, "work_years": 5, "work_experience": "...", "project_experience": "..."}},
+                {{"name": "李四", "gender": "女", "age": 28, "work_years": 3, "work_experience": "...", "project_experience": "..."}}
                 ]
                 ```
 
@@ -152,7 +153,7 @@ class ConnDeepseek:
 
             content = completion.choices[0].message.content
             result_json = self.extract_json_array(content)
-            # logger.info(f"json: {result_json}")
+            logger.info(f"json: {result_json}")
             return result_json
         except Exception as e:
             logger.error(f"ai整理文档错误: {e}")
