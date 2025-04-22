@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能简历筛选系统</title>
+    <style>
+        /* 全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        /* 头部区域 */
+        header {
+            background-color: #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2d5bff;
+            text-align: center;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: #555;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .nav-links a:hover {
+            color: #2d5bff;
+        }
+        
+        /* 主内容区域 */
+        .main-container {
+            display: flex;
+            max-width: 1400px;
+            margin: 2rem auto;
+            min-height: calc(100vh - 150px);
+        }
+        
+        /* 左侧面板 */
+        .left-panel {
+            flex: 1;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            margin-right: 1.5rem;
+            max-width: 300px;
+            height: fit-content;
+        }
+        
+        .panel-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #333;
+            display: flex;
+            align-items: center;
+        }
+        
+        .panel-title::before {
+            content: "";
+            display: inline-block;
+            width: 4px;
+            height: 20px;
+            background-color: #2d5bff;
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+        
+        .job-list {
+            list-style: none;
+        }
+        
+        .job-item {
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+        
+        .job-item:hover {
+            background-color: #f0f5ff;
+            border-left: 3px solid #2d5bff;
+        }
+        
+        .job-item.active {
+            background-color: #f0f5ff;
+            border-left: 3px solid #2d5bff;
+            font-weight: 500;
+            color: #2d5bff;
+        }
+        
+        /* 右侧内容区 */
+        .right-panel {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .search-bar {
+            display: flex;
+            margin-bottom: 1.5rem;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px 0 0 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: border 0.3s;
+        }
+        
+        .search-input:focus {
+            border-color: #2d5bff;
+        }
+        
+        .search-button {
+            background-color: #2d5bff;
+            color: white;
+            border: none;
+            padding: 0 20px;
+            border-radius: 0 8px 8px 0;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        .search-button:hover {
+            background-color: #1a46e0;
+        }
+        
+        .resume-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .resume-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .resume-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .candidate-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .card-badge {
+            background-color: #f0f5ff;
+            color: #2d5bff;
+            font-size: 0.8rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        
+        .card-content {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+        }
+        
+        .rating {
+            display: flex;
+            gap: 2px;
+        }
+        
+        .star {
+            color: #ffce54;
+        }
+        
+        .view-button {
+            background-color: transparent;
+            color: #2d5bff;
+            border: 1px solid #2d5bff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+        }
+        
+        .view-button:hover {
+            background-color: #2d5bff;
+            color: white;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .left-panel {
+                max-width: 100%;
+                margin-right: 0;
+                margin-bottom: 1.5rem;
+            }
+            
+            .resume-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* 表单样式 */
+        .job-form {
+            width: 100%;
+        }
+        
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: border-color 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: #2d5bff;
+            outline: none;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            background-color: #2d5bff;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-top: 1rem;
+            transition: background-color 0.3s;
+        }
+        
+        .submit-btn:hover {
+            background-color: #1a46e0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <div class="logo">智能简历筛选系统</div>
+        </div>
+    </header>
+    
+    <main class="main-container">
+        <!-- 左侧面板修改为表单 -->
+        <aside class="left-panel">
+            <h2 class="panel-title">筛选条件</h2>
+            <form class="job-form" action="/get_job/better_rank" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label class="form-label" for="job">职位名称</label>
+                    <input type="text" id="job" name="job" class="form-control" placeholder="例如：嵌入式应用开发工程师" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="files">上传简历文件</label>
+                    <input type="file" id="files" name="files" class="form-control" multiple accept=".pdf" style="padding: 8px;">
+                    <small style="color: #888; font-size: 0.8rem;">可选择多个PDF文件同时上传</small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="folder-upload">或上传整个文件夹</label>
+                    <input type="file" id="folder-upload" name="folder" class="form-control" webkitdirectory directory multiple style="padding: 8px;">
+                    <small style="color: #888; font-size: 0.8rem;">直接选择包含PDF文件的文件夹（部分浏览器支持）</small>
+                </div>
+                
+                <button type="submit" class="submit-btn">开始筛选</button>
+            </form>
+        </aside>
+        
+        <!-- 右侧内容区 -->
+        <section class="right-panel">
+            <div class="search-bar">
+                <input type="text" id="search-input" class="search-input" placeholder="搜索候选人姓名、技能或经历...">
+                <button id="search-button" class="search-button">搜索</button>
+            </div>
+            
+            <!-- 结果标题 -->
+            <div class="result-header" style="margin-bottom: 1rem; display: none;" id="result-header">
+                <h2 style="font-size: 1.2rem; color: #333;">
+                    搜索结果：<span id="job-title">职位名称</span>
+                    <span style="font-size: 0.9rem; color: #666; margin-left: 10px;">共 <span id="result-count">0</span> 名候选人</span>
+                </h2>
+            </div>
+            
+            <!-- 结果列表 -->
+            <div class="resume-list" id="resume-list">
+                <!-- 结果数据将通过JavaScript动态加载 -->
+                <p id="empty-message" style="text-align: center; color: #666; padding: 2rem;">
+                    请在左侧输入职位名称并上传简历文件开始筛选
+                </p>
+            </div>
+            
+            <!-- 简历详情模态框 -->
+            <div id="resume-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000;">
+                <div style="position: relative; width: 80%; max-width: 800px; margin: 50px auto; background-color: white; padding: 20px; border-radius: 8px; max-height: 80vh; overflow-y: auto;">
+                    <button id="close-modal" style="position: absolute; right: 15px; top: 15px; background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+                    <h2 id="modal-title" style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee;"></h2>
+                    <div id="modal-content"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // 模拟数据，实际应用中这部分会由API返回
+        let resumeData = [];
+        
+        // 页面加载时的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 表单提交处理
+            const form = document.querySelector('.job-form');
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault(); // 阻止表单默认提交行为
+                
+                const formData = new FormData(form);
+                const jobTitle = formData.get('job');
+                
+                // 显示加载状态
+                document.getElementById('empty-message').textContent = "正在分析简历，请稍候...";
+                
+                try {
+                    // 发送表单数据到服务器
+                    const response = await fetch('/get_job/better_rank', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('网络请求失败');
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // 更新界面显示
+                    if (data && data.data && Array.isArray(data.data)) {
+                        resumeData = data.data;
+                        renderResumeList(resumeData, jobTitle);
+                    } else {
+                        throw new Error('无效的数据格式');
+                    }
+                } catch (error) {
+                    document.getElementById('empty-message').textContent = `错误: ${error.message}`;
+                    console.error('Error:', error);
+                }
+            });
+            
+            // 搜索功能
+            document.getElementById('search-button').addEventListener('click', function() {
+                const searchTerm = document.getElementById('search-input').value.toLowerCase();
+                if (!resumeData || resumeData.length === 0) {
+                    return;
+                }
+                
+                const filteredData = resumeData.filter(resume => {
+                    return (resume.name?.toLowerCase().includes(searchTerm)) || 
+                           (resume.skills?.toLowerCase().includes(searchTerm)) ||
+                           (resume.work_experience?.toLowerCase().includes(searchTerm));
+                });
+                
+                renderResumeList(filteredData, document.getElementById('job-title').textContent);
+            });
+            
+            // 关闭模态框
+            document.getElementById('close-modal').addEventListener('click', function() {
+                document.getElementById('resume-modal').style.display = 'none';
+            });
+            
+            // 点击模态框外部关闭
+            document.getElementById('resume-modal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.style.display = 'none';
+                }
+            });
+        });
+        
+        // 渲染简历列表
+        function renderResumeList(data, jobTitle) {
+            const resumeList = document.getElementById('resume-list');
+            const resultHeader = document.getElementById('result-header');
+            const resultCount = document.getElementById('result-count');
+            const jobTitleEl = document.getElementById('job-title');
+            
+            // 清空现有内容
+            resumeList.innerHTML = '';
+            
+            // 更新标题
+            jobTitleEl.textContent = jobTitle || '所有职位';
+            resultCount.textContent = data.length;
+            resultHeader.style.display = 'block';
+            
+            if (data.length === 0) {
+                resumeList.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">没有找到匹配的简历</p>';
+                return;
+            }
+            
+            // 创建结果列表
+            const table = document.createElement('table');
+            table.style.width = '100%';
+            table.style.borderCollapse = 'collapse';
+            table.style.marginBottom = '2rem';
+            
+            // 表头
+            const thead = document.createElement('thead');
+            thead.innerHTML = `
+                <tr style="background-color: #f5f7fa; text-align: left;">
+                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0;">排名</th>
+                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0;">姓名</th>
+                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0;">年龄</th>
+                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0;">工作年限</th>
+                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0; text-align: center;">匹配度</th>
+                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0; text-align: center;">操作</th>
+                </tr>
+            `;
+            table.appendChild(thead);
+            
+            // 表体
+            const tbody = document.createElement('tbody');
+            data.forEach((resume, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f0f0f0;">${index + 1}</td>
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f0f0f0;">${resume.name || 'None'}</td>
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f0f0f0;">${resume.age || 'None'}</td>
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f0f0f0;">${resume.work_years || 'None'}</td>
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f0f0f0; text-align: center;">
+                        ${getMatchStars(index, data.length)}
+                    </td>
+                    <td style="padding: 12px 15px; border-bottom: 1px solid #f0f0f0; text-align: center;">
+                        <button class="view-button" onclick="showResumeDetail(${index})">查看详情</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            table.appendChild(tbody);
+            
+            resumeList.appendChild(table);
+        }
+        
+        // 根据排名生成匹配度星级
+        function getMatchStars(index, total) {
+            const maxStars = 5;
+            let stars = '';
+            
+            // 计算匹配星级，前20%为5星，20%-40%为4星，依此类推
+            const starCount = maxStars - Math.floor((index / total) * maxStars);
+            
+            for (let i = 0; i < starCount; i++) {
+                stars += '<span class="star">★</span>';
+            }
+            
+            for (let i = starCount; i < maxStars; i++) {
+                stars += '<span class="star" style="color: #ddd;">☆</span>';
+            }
+            
+            return `<div class="rating">${stars}</div>`;
+        }
+        
+        // 显示简历详情
+        function showResumeDetail(index) {
+            const resume = resumeData[index];
+            if (!resume) return;
+            
+            const modal = document.getElementById('resume-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalContent = document.getElementById('modal-content');
+            
+            modalTitle.textContent = `${resume.name || '未知姓名'}的简历详情`;
+            
+            // 构建详情内容
+            let contentHTML = '<div style="line-height: 1.8;">';
+            
+            // 基本信息部分
+            contentHTML += '<div style="margin-bottom: 20px;">';
+            contentHTML += '<h3 style="font-size: 1.1rem; margin-bottom: 10px;">基本信息</h3>';
+            contentHTML += '<table style="width: 100%; border-collapse: collapse;">';
+            contentHTML += `
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee; width: 100px;">姓名</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">${resume.name || 'None'}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee; width: 100px;">性别</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">${resume.gender || 'None'}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">年龄</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">${resume.age || 'None'}</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">工作年限</td>
+                    <td style="padding: 8px; border-bottom: 1px solid #eee;">${resume.work_years || 'None'}</td>
+                </tr>
+            `;
+            contentHTML += '</table>';
+            contentHTML += '</div>';
+            
+            // 工作经历部分
+            contentHTML += '<div style="margin-bottom: 20px;">';
+            contentHTML += '<h3 style="font-size: 1.1rem; margin-bottom: 10px;">工作经历</h3>';
+            contentHTML += `<div style="padding: 10px; background-color: #f9f9f9; border-radius: 4px;">${resume.work_experience || '无工作经历'}</div>`;
+            contentHTML += '</div>';
+            
+            // 项目经历部分
+            contentHTML += '<div style="margin-bottom: 20px;">';
+            contentHTML += '<h3 style="font-size: 1.1rem; margin-bottom: 10px;">项目经历</h3>';
+            contentHTML += `<div style="padding: 10px; background-color: #f9f9f9; border-radius: 4px;">${resume.project_experience || '无项目经历'}</div>`;
+            contentHTML += '</div>';
+            
+            // 所有其他信息
+            contentHTML += '<div>';
+            contentHTML += '<h3 style="font-size: 1.1rem; margin-bottom: 10px;">其他信息</h3>';
+            contentHTML += '<table style="width: 100%; border-collapse: collapse;">';
+            
+            // 字段映射表，将英文键映射到中文显示
+            const fieldMapping = {
+                'name': '姓名',
+                'gender': '性别',
+                'age': '年龄',
+                'work_years': '工作年限',
+                'work_experience': '工作经历',
+                'project_experience': '项目经历',
+                'education': '教育背景',
+                'skills': '技能',
+                'certifications': '证书',
+                'languages': '语言能力',
+                'email': '邮箱',
+                'phone': '电话'
+            };
+            
+            // 显示除了已经显示过的字段外的所有其他字段
+            const excludedFields = ['name', 'gender', 'age', 'work_years', 'work_experience', 'project_experience'];
+            
+            for (const key in resume) {
+                if (!excludedFields.includes(key)) {
+                    const displayName = fieldMapping[key] || key;
+                    contentHTML += `
+                        <tr>
+                            <td style="padding: 8px; border-bottom: 1px solid #eee; width: 100px; font-weight: 500;">${displayName}</td>
+                            <td style="padding: 8px; border-bottom: 1px solid #eee;">${resume[key]}</td>
+                        </tr>
+                    `;
+                }
+            }
+            
+            contentHTML += '</table>';
+            contentHTML += '</div>';
+            
+            contentHTML += '</div>';
+            modalContent.innerHTML = contentHTML;
+            
+            modal.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

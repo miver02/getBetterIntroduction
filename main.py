@@ -1,13 +1,11 @@
-import json
 import os
-import asyncio
-from fastapi import FastAPI, Query
+from typing import List, Optional
+from fastapi import FastAPI, File, Form, Query, UploadFile
+from fastapi.responses import FileResponse
 from openai import OpenAI
 import uvicorn
-import PyPDF2
-import re
 import logging
-
+from basecode import HandleFiles, ConnDeepseek
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -15,113 +13,87 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
-class HandleFiles:
-    def __init__(self):
-        self.relative_paths = []
-        self.font_by_pdfs = []
 
-    def get_pdf_path(self,folder_path='./pdf'):
-        """
-        获取指定文件夹下所有文件的相对路径
-        """
-        try:
-            for root, dirs, files in os.walk(folder_path):
-                for filename in files:
-                    relative_path = os.path.join(folder_path, filename)
-                    self.relative_paths.append(relative_path)
-
-            logger.info(f"文件路径如下:{self.relative_paths}")
-        except Exception as e:
-            logger.error(f"获取文件路径错误：{e}")
-        
-    async def get_fonts_with_pypdf(self, pdf_path):
-        """
-        使用pypdf获取字体资源信息
-        """
-        try:
-            font_by_page = {}
-            with open(pdf_path, 'rb') as file:
-                pdf_reader = PyPDF2.PdfReader(file)
-                # 遍历每一页
-                for page_num, page in enumerate(pdf_reader.pages, 1):
-                    text = page.extract_text()
-                    if text.split():
-                        font_by_page[f"第{page_num}页"] = text
-                        
-                self.font_by_pdfs.append(font_by_page)                                                          
-        except Exception as e:
-            logger.error(f"获取{pdf_path}文件内容错误: {e}")
-    async def read_pdf(self):
-        """
-        读取pdf文件
-        """
-        try:
-            tasks = []
-            for pdf_path in self.relative_paths:
-                task = asyncio.create_task(self.get_fonts_with_pypdf(pdf_path))
-                tasks.append(task)
-            await asyncio.gather(*tasks)    
-
-            logger.info(f"文件内容读取完毕")
-        except Exception as e:
-            logger.error(f"任务列表处理任务出现错误: {e}")
-
-class ConnDeepseek:
-    def __init__(self):
-        self.api_key = os.environ.get('DEEPSEEK_V3')
-
-    def conn_ai(self, pdf_contents, job):
-        try:
-            client = OpenAI(
-                base_url="https://openrouter.ai/api/v1",
-                api_key=self.api_key,
-            )
-
-            completion = client.chat.completions.create(
-                extra_headers={},
-                extra_body={},
-                model="deepseek/deepseek-v3-base:free",
-                messages=[
-                    {
-                    "role": "user",
-                    "content": f"我公司需要招聘{job}.读取{pdf_contents},帮我整理文件,并将数据格式化,一份简历封装为一个json数据,\
-                        json数据的键包含姓名,性别,年龄,工龄,工作经历,项目经历,json数据的值需要你从{pdf_contents}中提取或者总结,将所有简历整理为json数据后,按照所需岗位排序后返回给我json列表"
-                    }
-                ]
-            )
-
-            content = completion.choices[0].message.content
-            match = re.search(r'\[(.*?)\]', content)
-            if match:
-                result = match.group(1)
-                logger.info(f"ai整理文档成功,返回数据: {result}")
-                result_json = json.loads(result)
-                return result_json
-        except Exception as e:
-            logger.error(f"ai整理文档错误: {e}")
+async def save_uploaded_file(file, relative_path, pdf_paths):
+    # 保存文件
+    try:
+        # 读取上传的文件内容
+        content = await file.read()
+        # 写入到目标文件
+        with open(relative_path, "wb") as f:
+            f.write(content)
+        logger.info(f"保存文件: {relative_path}")
+    except Exception as e:
+        logger.error(f"保存文件 {file.filename} 时出错: {e}")
 
 
-hf = None
+@app.post("/get_job/better_rank")
+async def get_better_intro(
+    job: str = Form(...),  # 从表单获取职位名称
+    files: Optional[List[UploadFile]] = File(None),  # 可选的简历文件
+    folder: Optional[List[UploadFile]] = File(None)  # 可选的文件夹中的文件
+):
+    logger.info(f"处理POST请求，职位: {job}")
     
-
-@app.on_event("startup")
-async def startup_event():
-    global hf
+    # 创建文件处理器实例
     hf = HandleFiles()
-    logger.info("获取pdf文件的相对路径...")
-    hf.get_pdf_path()
+    pdf_paths = []  # 存储PDF文件相对路径的列表
+    
+    # 确保临时文件夹存在
+    pdf_dir = "./pdf"
+    if not os.path.exists(pdf_dir):
+        os.makedirs(pdf_dir)
+    else:
+        # 清空临时文件夹（可选，取决于您的需求）
+        for filename in os.listdir(pdf_dir):
+            file_path = os.path.join(pdf_dir, filename)
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+            except Exception as e:
+                logger.error(f"清理文件时出错: {e}")
+    
+    # 处理上传的文件
+    if files:
+        logger.info(f"收到 {len(files)} 个文件")
+        for file in files:
+            if file.filename.lower().endswith('.pdf'):
+                # 构建保存路径
+                relative_path = pdf_dir + '/' + file.filename
+                
+                await save_uploaded_file(file, relative_path, pdf_paths)
+                # 添加到路径列表
+                pdf_paths.append(relative_path)
+    # 处理文件夹中的文件
+    if folder:
+        logger.info(f"收到 {len(folder)} 个文件夹文件")
+        for file in folder:
+            if file.filename.lower().endswith('.pdf'):
+                # 从文件夹路径中提取文件名
+                # 文件夹上传时，filename通常包含路径，如 "subfolder/file.pdf"
+                _, filename = os.path.split(file.filename)
+                relative_path = pdf_dir + '/' + filename
+                
+                await save_uploaded_file(file, relative_path, pdf_paths)
+                # 添加到路径列表
+                pdf_paths.append(relative_path)
 
-    logger.info("读取文件信息...")
-    await hf.read_pdf()
-
-
-@app.get("/get_job/better_rank")
-async def main(job: str = Query(..., description="招聘岗位")):
-    global hf
-    cds = ConnDeepseek()    
+    # 读取PDF内容
+    pdf_contents = await hf.read_pdf(pdf_paths)
+    
+    # 调用AI分析
+    cds = ConnDeepseek()
     logger.info(f"模型格式化数据中...")
-    response = cds.conn_ai(hf.font_by_pdfs, job)
+    response = cds.conn_ai(pdf_contents, job)
+    if response:
+        return {"status": "success", "data": response}
+    else:
+        return {"status": "false", "data": response}
 
+@app.get("/")
+async def main():
+    return FileResponse("index.html")
 
 if __name__ == '__main__':
+    logger.info("启动服务...")
     uvicorn.run(app, host="0.0.0.0", port=8001)
