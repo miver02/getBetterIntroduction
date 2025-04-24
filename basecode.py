@@ -110,14 +110,15 @@ class ConnDeepseek:
         logger.error(f"无法解析JSON，原始内容前100字符: {content[:100]}...")
         return None
 
-    def conn_ai(self, pdf_contents, job):
+    def conn_ai(self, pdf_contents, job, select):
         prompt = f"""我公司需要招聘{job}。读取{pdf_contents},理解文件内容和细节,帮我整理文件,并将数据格式化。
                 请严格按照以下要求返回：
                 1. 一份简历封装为一个JSON对象
                 2. 将所有简历JSON对象放在一个JSON数组中
                 3. 返回格式必须是有效的JSON，不要添加任何额外文本或说明,JSON的键必须是英文,JSON的值必须是原文件中的总结或者原文
                 4. JSON数组按照与岗位匹配度从高到低排序
-                5. 注意以下字段提取细节:性别根据文件提取,基本上必须要有;年龄根据出生日期计算;工龄根据项目经验或者工作经验计算;这些字段的提取是需要你理解文件内容,从而进行提取的.
+                5. 注意以下字段提取细节:性别根据文件提取.
+                6. 根据筛选条件{select}，按照职位符合度以及筛选条件符合度进行排序
                 
 
                 例如:

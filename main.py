@@ -30,6 +30,7 @@ async def save_uploaded_file(file, relative_path, pdf_paths):
 @app.post("/get_job/better_rank")
 async def get_better_intro(
     job: str = Form(...),  # 从表单获取职位名称
+    select: str = Form(...),  # 从表单获取筛选条件
     files: Optional[List[UploadFile]] = File(None),  # 可选的简历文件
     folder: Optional[List[UploadFile]] = File(None)  # 可选的文件夹中的文件
 ):
@@ -84,7 +85,7 @@ async def get_better_intro(
     # 调用AI分析
     cds = ConnDeepseek()
     logger.info(f"模型格式化数据中...")
-    response = cds.conn_ai(pdf_contents, job)
+    response = cds.conn_ai(pdf_contents, job, select)
     if response:
         return {"status": "success", "data": response}
     else:
