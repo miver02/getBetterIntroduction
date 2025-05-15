@@ -1,4 +1,3 @@
-
 # 配置日志
 import asyncio
 import json
@@ -7,6 +6,7 @@ import os
 import re
 import PyPDF2
 from openai import OpenAI
+import requests
 
 
 logging.basicConfig(level=logging.INFO)
@@ -132,16 +132,15 @@ class ConnDeepseek:
                 请仅返回JSON数组，不要包含其他文本、注释或说明。
                 """
         try:
-            client = OpenAI(
-                base_url="https://openrouter.ai/api/v1",
-                api_key=self.api_key,
-            )
+            # 使用requests库直接调用API，避免OpenAI库的代理问题
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            }
             
-            completion = client.chat.completions.create(
-                extra_headers={},
-                extra_body={},
-                model="deepseek/deepseek-chat-v3-0324",
-                messages=[
+            data = {
+                "model": "deepseek/deepseek-chat-v3-0324",
+                "messages": [
                     {
                         "role": "system",
                         "content": "你是一个精确的JSON生成器。你只返回有效的JSON，不返回任何其他文本。你不在JSON中添加任何注释或解释。"
@@ -151,12 +150,23 @@ class ConnDeepseek:
                         "content": prompt
                     }
                 ]
+            }
+            
+            response = requests.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers=headers,
+                json=data
             )
-
-            content = completion.choices[0].message.content
-            result_json = self.extract_json_array(content)
-            logger.info(f"json: {result_json}")
-            return result_json
+            
+            if response.status_code == 200:
+                result = response.json()
+                content = result['choices'][0]['message']['content']
+                result_json = self.extract_json_array(content)
+                logger.info(f"json: {result_json}")
+                return result_json
+            else:
+                logger.error(f"API请求失败: {response.status_code}, {response.text}")
+                return None
         except Exception as e:
             logger.error(f"ai整理文档错误: {e}")
             return None

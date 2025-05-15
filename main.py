@@ -31,10 +31,12 @@ async def save_uploaded_file(file, relative_path, pdf_paths):
 async def get_better_intro(
     job: str = Form(...),  # 从表单获取职位名称
     select: str = Form(...),  # 从表单获取筛选条件
-    files: Optional[List[UploadFile]] = File(None),  # 可选的简历文件
-    folder: Optional[List[UploadFile]] = File(None)  # 可选的文件夹中的文件
+    files: List[UploadFile] = File([]),  # 可选的简历文件
+    folder: List[UploadFile] = File([])  # 可选的文件夹中的文件
 ):
-    logger.info(f"处理POST请求，职位: {job}")
+    logger.info(f"处理POST请求，职位: {job}, 筛选条件: {select}")
+    logger.info(f"收到的文件数量: {len(files) if files else 0}")
+    logger.info(f"收到的文件夹文件数量: {len(folder) if folder else 0}")
     
     # 创建文件处理器实例
     hf = HandleFiles()

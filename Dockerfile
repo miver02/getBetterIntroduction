@@ -18,7 +18,7 @@ COPY . /app/
 EXPOSE 8001
 
 # 设置环境变量
-ENV api_key = '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'
+ENV api_key = ''
 
 # 设置默认启动命令
 CMD ["python", "main.py"]
