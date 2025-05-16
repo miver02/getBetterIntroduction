@@ -55,7 +55,7 @@ class HandleFiles:
 
 class ConnDeepseek:
     def __init__(self):
-        self.api_key = os.environ.get('DEEPSEEK_V3')
+        self.api_key = os.environ.get('JINGLE_MINER_DEEPSEEK_V3')
 
     def extract_json_array(self, content):
         """

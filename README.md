@@ -63,7 +63,7 @@ pip install -r requirements.txt
 
 ```bash
 # Linux/macOS
-export DEEPSEEK_V3=your_api_key_here
+export My_DeepSeek_V3=your_api_key_here
 
 # Windows
 set DEEPSEEK_V3=your_api_key_here
