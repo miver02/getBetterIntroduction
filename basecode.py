@@ -55,7 +55,7 @@ class HandleFiles:
 
 class ConnDeepseek:
     def __init__(self):
-        self.api_key = os.environ.get('JINGLE_MINER_DEEPSEEK_V3')
+        self.api_key = os.environ.get('My_DEEPSEEK_V3')
 
     def extract_json_array(self, content):
         """
@@ -139,7 +139,8 @@ class ConnDeepseek:
             }
             
             data = {
-                "model": "deepseek/deepseek-chat-v3-0324",
+                # "model": "deepseek/deepseek-chat-v3-0324",
+                "model": "qwen-plus",
                 "messages": [
                     {
                         "role": "system",
@@ -153,7 +154,8 @@ class ConnDeepseek:
             }
             
             response = requests.post(
-                "https://openrouter.ai/api/v1/chat/completions",
+                # "https://openrouter.ai/api/v1/chat/completions", # openrouter
+                "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions", # 阿里云百炼
                 headers=headers,
                 json=data
             )
