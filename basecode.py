@@ -7,8 +7,10 @@ import re
 import PyPDF2
 from openai import OpenAI
 import requests
+from dotenv import load_dotenv
 
 
+load_dotenv(".env")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
