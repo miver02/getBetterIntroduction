@@ -319,7 +319,7 @@
         <!-- 左侧面板修改为表单 -->
         <aside class="left-panel">
             <h2 class="panel-title">筛选条件</h2>
-            <form class="job-form" action="/get_job/better_rank" method="POST" enctype="multipart/form-data">
+            <form class="job-form" action="/api/models/get_rank" method="POST" enctype="multipart/form-data">
                 <div class="form-group">
                     <label class="form-label" for="job">职位名称</label>
                     <input type="text" id="job" name="job" class="form-control" placeholder="例如：嵌入式应用开发工程师" required>
@@ -399,7 +399,7 @@
                 
                 try {
                     // 发送表单数据到服务器
-                    const response = await fetch('/get_job/better_rank', {
+                    const response = await fetch('/api/models/get_rank', {
                         method: 'POST',
                         body: formData
                     });
@@ -482,12 +482,12 @@
             const thead = document.createElement('thead');
             thead.innerHTML = `
                 <tr style="background-color: #f5f7fa; text-align: left;">
-                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0;">Rank</th>
-                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0;">Name</th>
-                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0;">Age</th>
-                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0;">WorkYears</th>
-                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0; text-align: center;">Match</th>
-                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0; text-align: center;">Operate</th>
+                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0;">排名</th>
+                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0;">姓名</th>
+                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0;">年龄</th>
+                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0;">工龄</th>
+                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0; text-align: center;">契合度</th>
+                    <th style="padding: 12px 15px; border-bottom: 1px solid #e0e0e0; text-align: center;">详情</th>
                 </tr>
             `;
             table.appendChild(thead);

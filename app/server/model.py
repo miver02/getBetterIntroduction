@@ -1,68 +1,18 @@
-# 配置日志
-import asyncio
 import json
-import logging
 import os
 import re
-import PyPDF2
-from openai import OpenAI
+from typing import Tuple
 import requests
-from dotenv import load_dotenv
+from . import logger
 
 
-load_dotenv(".env")
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-class HandleFiles:
-    def __init__(self):
-        self.relative_paths = []
-        self.font_by_pdfs = []
-        
-    async def get_fonts_with_pypdf(self, pdf_path):
-        """
-        使用pypdf获取字体资源信息
-        """
-        try:
-            font_by_page = {}
-            with open(pdf_path, 'rb') as file:
-                pdf_reader = PyPDF2.PdfReader(file)
-                # 遍历每一页
-                for page_num, page in enumerate(pdf_reader.pages, 1):
-                    text = page.extract_text()
-                    if text.split():
-                        font_by_page[f"第{page_num}页"] = text
-                        
-            self.font_by_pdfs.append(font_by_page)                                                          
-        except Exception as e:
-            logger.error(f"获取{pdf_path}文件内容错误: {e}")
-
-    async def read_pdf(self, pdf_paths):
-        """
-        读取pdf文件
-        """
-        try:
-            tasks = []
-            for pdf_path in pdf_paths:
-                task = asyncio.create_task(self.get_fonts_with_pypdf(pdf_path))
-                tasks.append(task)
-
-            await asyncio.gather(*tasks)  
-            logger.info(f"文件内容读取完毕")
-            return self.font_by_pdfs
-        except Exception as e:
-            logger.error(f"任务列表处理任务出现错误: {e}")
-            return None
-
-
-class ConnDeepseek:
+class ConnModel:
+    """"link to model"""
     def __init__(self):
         self.api_key = os.environ.get('My_DEEPSEEK_V3')
 
-    def extract_json_array(self, content):
-        """
-        从AI生成的文本中提取JSON数组，处理多种可能的格式问题
-        """
+    async def extract_json_array(self, content) -> Tuple[list, str]:
+        """从AI生成的文本中提取JSON数组，处理多种可能的格式问题"""
         # 尝试多种提取方法
         
         # 方法1: 尝试从Markdown代码块中提取
@@ -71,7 +21,7 @@ class ConnDeepseek:
         if code_match:
             try:
                 json_text = code_match.group(1).strip()
-                return json.loads(json_text)
+                return json.loads(json_text), None
             except json.JSONDecodeError:
                 logger.debug("从代码块提取JSON失败，尝试其他方法")
         
@@ -80,13 +30,13 @@ class ConnDeepseek:
         array_match = array_pattern.search(content)
         if array_match:
             try:
-                return json.loads(array_match.group(0))
+                return json.loads(array_match.group(0)), None
             except json.JSONDecodeError:
                 logger.debug("从文本中提取JSON数组失败，尝试其他方法")
         
         # 方法3: 如果上述都失败，尝试到Extra data错误位置截断
         try:
-            return json.loads(content)
+            return json.loads(content), None
         except json.JSONDecodeError as e:
             error_str = str(e)
             if "Extra data" in error_str:
@@ -96,7 +46,7 @@ class ConnDeepseek:
                     # 截取到该位置的字符串
                     truncated = content[:char_pos]
                     # 尝试解析截断后的内容
-                    return json.loads(truncated)
+                    return json.loads(truncated), None
                 except (json.JSONDecodeError, AttributeError, ValueError) as sub_e:
                     logger.debug(f"截断JSON解析失败: {sub_e}")
         
@@ -104,15 +54,14 @@ class ConnDeepseek:
         # 移除尾部逗号
         fixed_content = re.sub(r',(\s*[\]}])', r'\1', content)
         try:
-            return json.loads(fixed_content)
+            return json.loads(fixed_content), None
         except json.JSONDecodeError:
-            pass
-        
+            pass        
         # 最后记录原始内容以便调试
         logger.error(f"无法解析JSON，原始内容前100字符: {content[:100]}...")
-        return None
+        return None, str("无法解析JSON")
 
-    def conn_ai(self, pdf_contents, job, select):
+    async def conn_ai(self, pdf_contents, job, select) -> Tuple[dict, str]:
         prompt = f"""我公司需要招聘{job}。读取{pdf_contents},理解文件内容和细节,帮我整理文件,并将数据格式化。
                 请严格按照以下要求返回：
                 1. 一份简历封装为一个JSON对象
@@ -132,7 +81,7 @@ class ConnDeepseek:
                 ```
 
                 请仅返回JSON数组，不要包含其他文本、注释或说明。
-                """
+            """
         try:
             # 使用requests库直接调用API，避免OpenAI库的代理问题
             headers = {
@@ -152,6 +101,7 @@ class ConnDeepseek:
                         "role": "user",
                         "content": prompt
                     }
+                    # 可以定义结构化输出
                 ]
             }
             
@@ -165,12 +115,70 @@ class ConnDeepseek:
             if response.status_code == 200:
                 result = response.json()
                 content = result['choices'][0]['message']['content']
-                result_json = self.extract_json_array(content)
-                logger.info(f"json: {result_json}")
-                return result_json
+                result_json, err = await self.extract_json_array(content)
+                # logger.info(f"json: {result_json}")
+                return result_json, err
             else:
                 logger.error(f"API请求失败: {response.status_code}, {response.text}")
-                return None
+                return None, str(response.text)
         except Exception as e:
             logger.error(f"ai整理文档错误: {e}")
-            return None
+            return None, str(e)
+
+    #  测试连接
+    async def test_conn(self) -> Tuple[dict | None, str | None]:
+        try:
+            prompt = f"你是谁"
+            headers = {
+                "Content-Type": "application/json"
+            }
+            data = {
+                "model": "llama3:8b",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "你是一个ollama,最擅长的是帮助用户学习语言, 你现在22岁了"
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    },
+                
+                ],
+                "stream": False,
+                "format": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "age": {
+                            "type": "integer"
+                        },
+                        "ability": {
+                            "type": "string"
+                        }
+                    },
+                    "required": ["name", "age", "ability"]
+                },
+                "options": {
+                    "temperature": 0
+                }
+            }
+            
+            response = requests.post(
+                "http://172.23.168.104:11434/api/chat",
+                headers=headers,
+                json=data
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                logger.info(f"json: {result}")
+                return result, None
+            else:
+                logger.error(f"API请求失败: {response.status_code}, {response.text}")
+                return None, str(response.text)
+        except Exception as e:
+            logger.error(f"ai整理文档错误: {e}")
+            return None, str(e)   
