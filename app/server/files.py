@@ -9,7 +9,7 @@ class HandleFiles:
     def __init__(self):
         self.pdf_paths = []
         self.font_by_pdfs = []
-        self.pdf_dir = "../pdf"
+        self.pdf_dir = "./pdf"
 
     async def if_exist_files(self) -> str:
         """确保临时文件夹存在"""
