@@ -9,8 +9,8 @@ export default defineConfig({
       '/api': {
         target: 'http://0.0.0.0:6666',
         changeOrigin: true,
-        secure: false
-      }
-    }
-  }
+        secure: false,
+      },
+    },
+  },
 })

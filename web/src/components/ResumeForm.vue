@@ -3,42 +3,44 @@
   <form class="job-form" @submit.prevent="handleSubmit">
     <div class="form-group">
       <label class="form-label" for="job">职位名称</label>
-      <input 
-        type="text" 
-        id="job" 
-        v-model="formData.job" 
-        class="form-control" 
-        placeholder="例如：嵌入式应用开发工程师" 
+      <input
+        type="text"
+        id="job"
+        v-model="formData.job"
+        class="form-control"
+        placeholder="例如：嵌入式应用开发工程师"
         required
-      >
+      />
     </div>
-    
+
     <div class="form-group">
       <label class="form-label" for="select">筛选条件</label>
-      <input 
-        type="text" 
-        id="select" 
-        v-model="formData.select" 
-        class="form-control" 
-        placeholder="例如：1，十年经验；2，独立开发;" 
+      <input
+        type="text"
+        id="select"
+        v-model="formData.select"
+        class="form-control"
+        placeholder="例如：1，十年经验；2，独立开发;"
         required
-      >
+      />
     </div>
 
     <div class="form-group">
       <label class="form-label" for="files">上传简历文件</label>
-      <input 
-        type="file" 
-        id="files" 
-        @change="handleFileChange" 
-        class="form-control" 
-        multiple 
-        accept=".pdf" 
-        style="padding: 8px;"
+      <input
+        type="file"
+        id="files"
+        @change="handleFileChange"
+        class="form-control"
+        multiple
+        accept=".pdf"
+        style="padding: 8px"
+      />
+      <small style="color: #888; font-size: 0.8rem"
+        >可选择多个PDF文件同时上传</small
       >
-      <small style="color: #888; font-size: 0.8rem;">可选择多个PDF文件同时上传</small>
     </div>
-    
+
     <button type="submit" class="submit-btn" :disabled="loading">
       {{ loading ? '正在处理...' : '开始筛选' }}
     </button>
@@ -53,7 +55,7 @@ const emit = defineEmits(['upload-success'])
 // 表单数据
 const formData = ref({
   job: '',
-  select: ''
+  select: '',
 })
 
 const files = ref([])
@@ -63,7 +65,7 @@ const loading = ref(false)
 const parent = inject('parent')
 
 // 文件选择处理
-const handleFileChange = (event) => {
+const handleFileChange = event => {
   files.value = Array.from(event.target.files)
 }
 
@@ -75,19 +77,19 @@ const handleSubmit = async () => {
   }
 
   loading.value = true
-  
+
   try {
     const formDataObj = new FormData()
     formDataObj.append('job', formData.value.job)
     formDataObj.append('select', formData.value.select)
-    
+
     files.value.forEach(file => {
       formDataObj.append('files', file)
     })
 
     const response = await fetch('/api/models/get_rank', {
       method: 'POST',
-      body: formDataObj
+      body: formDataObj,
     })
 
     if (!response.ok) {
@@ -95,7 +97,7 @@ const handleSubmit = async () => {
     }
 
     const data = await response.json()
-    
+
     if (data && data.data && Array.isArray(data.data)) {
       // 添加保护性检查
       if (parent && typeof parent.updateResumeData === 'function') {

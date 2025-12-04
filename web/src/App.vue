@@ -6,45 +6,45 @@
         <div class="logo">智能简历筛选系统</div>
       </div>
     </header>
-    
+
     <main class="main-container">
       <!-- 左侧面板修改为表单 -->
       <aside class="left-panel">
         <h2 class="panel-title">筛选条件</h2>
         <ResumeForm />
       </aside>
-      
+
       <!-- 右侧内容区 -->
       <section class="right-panel">
         <div class="search-bar">
-          <input 
-            type="text" 
-            v-model="searchTerm" 
-            class="search-input" 
+          <input
+            type="text"
+            v-model="searchTerm"
+            class="search-input"
             placeholder="搜索候选人姓名、技能或经历..."
-          >
+          />
           <button @click="handleSearch" class="search-button">搜索</button>
         </div>
-        
+
         <!-- 结果标题 -->
-        <div class="result-header" v-if="jobTitle" style="margin-bottom: 1rem;">
-          <h2 style="font-size: 1.2rem; color: #333;">
+        <div class="result-header" v-if="jobTitle" style="margin-bottom: 1rem">
+          <h2 style="font-size: 1.2rem; color: #333">
             搜索结果：<span>{{ jobTitle }}</span>
-            <span style="font-size: 0.9rem; color: #666; margin-left: 10px;">
+            <span style="font-size: 0.9rem; color: #666; margin-left: 10px">
               共 {{ resumeData.length }} 名候选人
             </span>
           </h2>
         </div>
-        
+
         <!-- 结果列表 -->
-        <ResumeList 
-          :resumes="filteredResumes" 
+        <ResumeList
+          :resumes="filteredResumes"
           @view-detail="showResumeDetail"
         />
-        
+
         <!-- 简历详情模态框 -->
-        <ResumeModal 
-          :resume="selectedResume" 
+        <ResumeModal
+          :resume="selectedResume"
           :visible="isModalVisible"
           @close="isModalVisible = false"
         />
@@ -69,12 +69,14 @@ const isModalVisible = ref(false)
 // 计算属性：过滤后的简历数据
 const filteredResumes = computed(() => {
   if (!searchTerm.value) return resumeData.value
-  
+
   const term = searchTerm.value.toLowerCase()
   return resumeData.value.filter(resume => {
-    return (resume.name?.toLowerCase().includes(term)) || 
-           (resume.skills?.toLowerCase().includes(term)) ||
-           (resume.work_experience?.toLowerCase().includes(term))
+    return (
+      resume.name?.toLowerCase().includes(term) ||
+      resume.skills?.toLowerCase().includes(term) ||
+      resume.work_experience?.toLowerCase().includes(term)
+    )
   })
 })
 
@@ -84,7 +86,7 @@ const handleSearch = () => {
 }
 
 // 显示简历详情
-const showResumeDetail = (resume) => {
+const showResumeDetail = resume => {
   selectedResume.value = resume
   isModalVisible.value = true
 }
@@ -97,7 +99,7 @@ const updateResumeData = (data, title) => {
 
 // 将方法暴露给子组件使用
 provide('parent', {
-  updateResumeData
+  updateResumeData,
 })
 </script>
 
@@ -171,7 +173,7 @@ header {
 }
 
 .panel-title::before {
-  content: "";
+  content: '';
   display: inline-block;
   width: 4px;
   height: 20px;
@@ -226,7 +228,7 @@ header {
   .main-container {
     flex-direction: column;
   }
-  
+
   .left-panel {
     max-width: 100%;
     margin-right: 0;
