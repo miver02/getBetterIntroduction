@@ -1,50 +1,60 @@
 <!-- src/components/ResumeForm.vue -->
 <template>
-  <form class="job-form" @submit.prevent="handleSubmit">
-    <div class="form-group">
-      <label class="form-label" for="job">职位名称</label>
-      <input
-        type="text"
-        id="job"
+  <el-form class="job-form" @submit.prevent="handleSubmit" label-position="top">
+    <el-form-item label="职位名称" required>
+      <el-input
         v-model="formData.job"
-        class="form-control"
         placeholder="例如：嵌入式应用开发工程师"
-        required
+        clearable
       />
-    </div>
+    </el-form-item>
 
-    <div class="form-group">
-      <label class="form-label" for="select">筛选条件</label>
-      <input
-        type="text"
-        id="select"
+    <el-form-item label="筛选条件" required>
+      <el-input
         v-model="formData.select"
-        class="form-control"
         placeholder="例如：1，十年经验；2，独立开发;"
-        required
+        clearable
+        type="textarea"
+        :rows="3"
       />
-    </div>
+    </el-form-item>
 
-    <div class="form-group">
-      <label class="form-label" for="files">上传简历文件</label>
-      <input
-        type="file"
-        id="files"
-        @change="handleFileChange"
-        class="form-control"
+    <el-form-item label="上传简历文件" required>
+      <el-upload
+        ref="uploadRef"
+        class="upload-wrapper"
+        :auto-upload="false"
         multiple
+        :on-change="handleFileChange"
         accept=".pdf"
-        style="padding: 8px"
-      />
-      <small style="color: #888; font-size: 0.8rem"
-        >可选择多个PDF文件同时上传</small
       >
-    </div>
+        <template #trigger>
+          <el-button type="primary" class="">选择文件</el-button>
+        </template>
+        <el-button 
+          type="success" 
+          class="clear-btn"
+          @click="clearFiles"
+        >
+          清空文件
+        </el-button>
+        <template #tip>
+          <div class="el-upload__tip">
+            可选择多个PDF文件同时上传
+          </div>
+        </template>
+      </el-upload>
+    </el-form-item>
 
-    <button type="submit" class="submit-btn" :disabled="loading">
+    <el-button 
+      type="primary" 
+      native-type="submit" 
+      :loading="loading"
+      style="width: 100%; margin-top: 1rem;"
+    >
       {{ loading ? '正在处理...' : '开始筛选' }}
-    </button>
-  </form>
+    </el-button>
+  </el-form>
 </template>
 
 <script setup>
@@ -60,19 +70,31 @@ const formData = ref({
 
 const files = ref([])
 const loading = ref(false)
+const uploadRef = ref(null)
 
 // 获取父组件方法
 const parent = inject('parent')
 
 // 文件选择处理
-const handleFileChange = event => {
-  files.value = Array.from(event.target.files)
+const handleFileChange = (file, fileList) => {
+  files.value = fileList.map(f => f.raw)
+}
+
+// 清空文件
+const clearFiles = () => {
+  uploadRef.value.clearFiles()
+  files.value = []
 }
 
 // 表单提交处理
 const handleSubmit = async () => {
   if (!formData.value.job || !formData.value.select) {
-    alert('请填写职位名称和筛选条件')
+    ElMessage.warning('请填写职位名称和筛选条件')
+    return
+  }
+
+  if (files.value.length === 0) {
+    ElMessage.warning('请至少上传一个简历文件')
     return
   }
 
@@ -106,12 +128,14 @@ const handleSubmit = async () => {
         console.warn('Parent component did not provide updateResumeData method')
       }
       emit('upload-success', data.data)
+      // 清空已上传的文件
+      clearFiles()
     } else {
       throw new Error('无效的数据格式')
     }
   } catch (error) {
     console.error('Error:', error)
-    alert(`错误: ${error.message}`)
+    ElMessage.error(`错误: ${error.message}`)
   } finally {
     loading.value = false
   }
@@ -119,55 +143,61 @@ const handleSubmit = async () => {
 </script>
 
 <style scoped>
-/* 表单样式 */
 .job-form {
   width: 100%;
 }
 
-.form-group {
-  margin-bottom: 1.2rem;
+/* 控制上传区域按钮与列表布局，按钮可换行并随容器移动 */
+.upload-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  justify-content: left;
 }
 
-.form-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #555;
-}
-
-.form-control {
+/* 保证 tip 和文件列表占满整行，显示在按钮下方 */
+.upload-wrapper .el-upload__tip {
+  order: 2;
   width: 100%;
-  padding: 10px;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  transition: border-color 0.3s;
+  margin-top: 2px;
+  color: ragb(0,0,0,.45);
+  text-align: left;
+  margin-left: 8px;
 }
 
-.form-control:focus {
-  border-color: #2d5bff;
-  outline: none;
-}
-
-.submit-btn {
+.upload-wrapper .el-upload__list {
+  order: 3;
   width: 100%;
-  background-color: #2d5bff;
-  color: white;
-  border: none;
-  padding: 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  margin-top: 1rem;
-  transition: background-color 0.3s;
+  margin-top: 2px;
+  text-align: left;
 }
 
-.submit-btn:hover:not(:disabled) {
-  background-color: #1a46e0;
+/* 如果需要更精确地控制文件项的对齐方式，可以添加以下样式 */
+.upload-wrapper ::v-deep .el-upload-list {
+  text-align: left;
 }
 
-.submit-btn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
+.upload-wrapper ::v-deep .el-upload-list__item {
+  justify-content: flex-start; /* 使文件项内容靠左对齐 */
+}
+
+/* 文件名过长处理：单行省略，防止溢出布局 */
+.upload-wrapper ::v-deep .el-upload-list__item-name {
+  display: flex;
+  max-width: calc(100% - 20px); /* 保留图标/操作空间，按需调整 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+/* 在非常窄的屏幕上允许换行以便查看完整名称（可选） */
+@media (max-width: 420px) {
+  .upload-wrapper ::v-deep .el-upload-list__item-name {
+    white-space: normal;
+    word-break: break-word;
+    max-width: 100%;
+  }
 }
 </style>

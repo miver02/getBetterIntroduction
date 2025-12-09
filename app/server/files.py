@@ -1,96 +1,79 @@
 import asyncio
-import os
-import PyPDF2
+from io import BytesIO
+import warnings
+import pdfplumber
 from . import logger
 
+
+# 更准确地匹配警告消息
+warnings.filterwarnings("ignore", message=".*Could get FontBBox from font descriptor.*")
+warnings.filterwarnings("ignore", message=".*Cannot set gray.*")
+# 直接忽略所有pdfminer的警告
+warnings.filterwarnings("ignore", category=UserWarning, module="pdfminer")
 
 class HandleFiles:
     """处理pdf文件"""
     def __init__(self):
-        self.pdf_paths = []
-        self.font_by_pdfs = []
-        self.pdf_dir = "./pdf"
-
-    async def if_exist_files(self) -> str:
-        """确保临时文件夹存在"""
-        try:
-            if not os.path.exists(self.pdf_dir):
-                os.makedirs(self.pdf_dir)
-            else:
-                # 清空临时文件夹（可选，取决于您的需求）
-                for filename in os.listdir(self.pdf_dir):
-                    file_path = os.path.join(self.pdf_dir, filename)
-                    try:
-                        if os.path.isfile(file_path):
-                            os.unlink(file_path)
-                    except Exception as e:
-                        logger.error(f"清理文件时出错: {e}")
-                        return str(e)
-            return None
-        except Exception as e:
-            logger.error(f"确保临时文件夹存在时出错: {e}")
-            return str(e)
-
-    async def save_uploaded_file(self, file, relative_path) -> str | None:
-        """保存文件"""
-        try:
-            # 读取上传的文件内容
-            content = await file.read()
-            # 写入到目标文件
-            with open(relative_path, "wb") as f:
-                f.write(content)
-            logger.info(f"保存文件: {relative_path}")
-        except Exception as e:
-            logger.error(f"保存文件 {file.filename} 时出错: {e}")
-            return str(e)
-
-    async def handle_files(self, files) -> str:
+        self.pdf_files = []     # 存储pdf文件
+        self.font_by_pdfs = []  # 存储pdf文件中的字体信息
+    async def handle_files(self, files) -> str | None:
         """处理文件"""
         try:
             if files:
-                logger.info(f"收到 {len(files)} 个文件")
+                logger.info(f"开始处理文件...")
             else:
                 logger.info("没有收到文件")
                 return "没有收到文件"
+            
+            self.pdf_files = [] 
             for file in files:
                 # 跳过非PDF文件
                 if not file.filename.lower().endswith('.pdf'):
                     continue
                 
-                # 安全拼接路径
-                _, filename = os.path.split(file.filename)
-                relative_path = os.path.join(self.pdf_dir, filename)  # 跨平台兼容
-                
-                # 保存文件
-                await self.save_uploaded_file(file, relative_path)
-                self.pdf_paths.append(relative_path)
+                # 读取文件内容并存储
+                content = await file.read()
+                self.pdf_files.append({
+                    'filename': file.filename,
+                    'content': content
+                })
             return None
         except Exception as e:
-            logger.error(f"保存文件 {file.filename} 时出错: {e}")
+            logger.error(f"处理文件 {file.filename} 时出错: {e}")
             return str(e)
     
-    async def get_fonts_with_pypdf(self, pdf_path):
+    async def get_fonts_with_pypdf(self, pdf_file: dict):
         """使用pypdf获取字体资源信息"""
         try:
-            font_by_page = {}
-            with open(pdf_path, 'rb') as file:
-                pdf_reader = PyPDF2.PdfReader(file)
-                # 遍历每一页
-                for page_num, page in enumerate(pdf_reader.pages, 1):
-                    text = page.extract_text()
-                    if text.split():
-                        font_by_page[f"第{page_num}页"] = text
-                        
-            self.font_by_pdfs.append(font_by_page)                                                          
-        except Exception as e:
-            logger.error(f"获取{pdf_path}文件内容错误: {e}")
+            text = ""
+            # 使用BytesIO从内存中读取PDF内容
+            pdf_content = BytesIO(pdf_file['content'])
+            with pdfplumber.open(pdf_content) as pdf:
+                for page in pdf.pages:
+                    text += page.extract_text() or ""
 
-    async def read_pdf(self):
+                # 如果没有提取到文本，尝试其他方法
+                if not text.strip():
+                    for page in pdf.pages:
+                        # 尝试提取表格数据
+                        tables = page.extract_tables()
+                        for table in tables:
+                            for row in table:
+                                text += " ".join([str(cell) if cell else "" for cell in row]) + "\n"
+                        
+            self.font_by_pdfs.append(text)                                                          
+        except Exception as e:
+            logger.error(f"获取{pdf_file['filename']}文件内容错误: {e}")
+            # 即使出错也添加空字符串，保证数组长度一致
+            self.font_by_pdfs.append("")
+    async def read_pdf(self) -> list | None:
         """读取pdf文件"""
         try:
             tasks = []
-            for pdf_path in self.pdf_paths:
-                task = asyncio.create_task(self.get_fonts_with_pypdf(pdf_path))
+            self.font_by_pdfs = []
+            
+            for pdf_file in self.pdf_files:
+                task = asyncio.create_task(self.get_fonts_with_pypdf(pdf_file))
                 tasks.append(task)
 
             await asyncio.gather(*tasks)  

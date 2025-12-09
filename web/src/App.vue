@@ -3,37 +3,45 @@
   <div id="app">
     <header>
       <div class="header-container">
-        <div class="logo">智能简历筛选系统</div>
+        <div class="logo">
+          <el-text tag="b" size="large" type="primary">智能简历筛选系统</el-text>
+        </div>
       </div>
     </header>
 
     <main class="main-container">
       <!-- 左侧面板修改为表单 -->
       <aside class="left-panel">
-        <h2 class="panel-title">筛选条件</h2>
+        <el-text tag="b" size="large">筛选条件</el-text>
         <ResumeForm />
       </aside>
 
       <!-- 右侧内容区 -->
       <section class="right-panel">
         <div class="search-bar">
-          <input
-            type="text"
+          <el-input
             v-model="searchTerm"
-            class="search-input"
             placeholder="搜索候选人姓名、技能或经历..."
-          />
-          <button @click="handleSearch" class="search-button">搜索</button>
+            style="flex: 1"
+          >
+            <template #append>
+              <el-button @click="handleSearch">
+                <el-icon><Search /></el-icon>
+                搜索
+              </el-button>
+            </template>
+          </el-input>
         </div>
 
         <!-- 结果标题 -->
         <div class="result-header" v-if="jobTitle" style="margin-bottom: 1rem">
-          <h2 style="font-size: 1.2rem; color: #333">
-            搜索结果：<span>{{ jobTitle }}</span>
-            <span style="font-size: 0.9rem; color: #666; margin-left: 10px">
-              共 {{ resumeData.length }} 名候选人
-            </span>
-          </h2>
+          <el-text tag="b" size="large">
+            搜索结果：
+            <el-tag type="primary">{{ jobTitle }}</el-tag>
+            <el-text size="small" type="info" style="margin-left: 10px">
+              共 {{ filteredResumes.length }} 名候选人
+            </el-text>
+          </el-text>
         </div>
 
         <!-- 结果列表 -->
@@ -55,6 +63,7 @@
 
 <script setup>
 import { ref, computed, provide } from 'vue'
+import { Search } from '@element-plus/icons-vue'
 import ResumeForm from './components/ResumeForm.vue'
 import ResumeList from './components/ResumeList.vue'
 import ResumeModal from './components/ResumeModal.vue'
@@ -82,7 +91,8 @@ const filteredResumes = computed(() => {
 
 // 搜索处理函数
 const handleSearch = () => {
-  // 搜索逻辑已经在计算属性中处理
+  // 触发重新计算 filteredResumes
+  filteredResumes.value;
 }
 
 // 显示简历详情
@@ -136,19 +146,13 @@ header {
   margin: 0 auto;
 }
 
-.logo {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #2d5bff;
-  text-align: center;
-}
-
 /* 主内容区域 */
 .main-container {
   display: flex;
   max-width: 1400px;
   margin: 2rem auto;
   min-height: calc(100vh - 150px);
+  gap: 2rem;
 }
 
 /* 左侧面板 */
@@ -159,27 +163,9 @@ header {
   box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
   padding: 1.5rem;
   margin-right: 1.5rem;
-  max-width: 300px;
+  max-width: 33%;
   height: fit-content;
-}
-
-.panel-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-  color: #333;
-  display: flex;
-  align-items: center;
-}
-
-.panel-title::before {
-  content: '';
-  display: inline-block;
-  width: 4px;
-  height: 20px;
-  background-color: #2d5bff;
-  margin-right: 10px;
-  border-radius: 2px;
+  min-width: 240px;
 }
 
 /* 右侧内容区 */
@@ -187,52 +173,25 @@ header {
   flex: 3;
   display: flex;
   flex-direction: column;
-}
-
-.search-bar {
-  display: flex;
-  margin-bottom: 1.5rem;
-}
-
-.search-input {
-  flex: 1;
-  padding: 12px 15px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px 0 0 8px;
-  font-size: 1rem;
-  outline: none;
-  transition: border 0.3s;
-}
-
-.search-input:focus {
-  border-color: #2d5bff;
-}
-
-.search-button {
-  background-color: #2d5bff;
-  color: white;
-  border: none;
-  padding: 0 20px;
-  border-radius: 0 8px 8px 0;
-  cursor: pointer;
-  font-weight: 500;
-  transition: background-color 0.3s;
-}
-
-.search-button:hover {
-  background-color: #1a46e0;
+  max-width: 67%;
+  min-width: 480px;
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
   .main-container {
     flex-direction: column;
+    gap: 1rem;
   }
 
   .left-panel {
     max-width: 100%;
     margin-right: 0;
     margin-bottom: 1.5rem;
+  }
+
+  .right-panel {
+    max-width: 100%;
   }
 }
 </style>

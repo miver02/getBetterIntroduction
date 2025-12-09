@@ -1,7 +1,7 @@
 from middleware.log import logger
-from config import get_apirouters_data
+from config import get_apirouters_data, MODEL_API_URL, MODEL_NAME
 
-__all__ = ["logger", "get_apirouters_data"]
+__all__ = ["logger", "get_apirouters_data", "MODEL_API_URL", "MODEL_NAME"]
 
 # 不立即实例化，而是定义工厂函数
 def create_server_data():

@@ -3,13 +3,14 @@ import os
 import re
 from typing import Tuple
 import requests
-from . import logger
+from . import logger, MODEL_API_URL, MODEL_NAME
 
 
 class ConnModel:
     """"link to model"""
     def __init__(self):
-        self.api_key = os.environ.get('My_DEEPSEEK_V3')
+        self.api_key = os.environ.get('My_ALIBAILIAN_API_KEY')
+        self.modelname = MODEL_NAME
 
     async def extract_json_array(self, content) -> Tuple[list, str]:
         """从AI生成的文本中提取JSON数组，处理多种可能的格式问题"""
@@ -67,16 +68,38 @@ class ConnModel:
                 1. 一份简历封装为一个JSON对象
                 2. 将所有简历JSON对象放在一个JSON数组中
                 3. 返回格式必须是有效的JSON，不要添加任何额外文本或说明,JSON的键必须是英文,JSON的值必须是原文件中的总结或者原文
-                4. JSON数组按照与岗位匹配度从高到低排序
-                5. 注意以下字段提取细节:性别根据文件提取.
-                6. 根据筛选条件{select}，按照职位符合度以及筛选条件符合度进行排序
+                4. 根据筛选条件{select}，按照职位符合度以及筛选条件符合度进行排序
+                5. JSON数组按照与岗位匹配度从高到低排序
+                6. 注意以下字段提取细节:{{
+                    name: 全文搜索并且判断应聘人的姓名,
+                    age: 全文搜索并且判断应聘人的年龄, 如果没有直接显示年龄, 尝试根据出生日期,毕业年份和工作年限等信息推算年龄,
+                    major: 全文搜索并且判断应聘人的专业,
+                    phone: 全文搜索并且判断应聘人的手机号, 格式一定要统一为11位数字,
                 
-
+                    gender: 全文搜索并且判断应聘人的性别,
+                    email: 全文搜索并且判断应聘人的邮箱,
+                    address: 全文搜索并且判断应聘人的现居住地址,
+                    work_years: 全文搜索并且判断应聘人的工作年限, 如果没有直接显示工作年限, 尝试根据工作经历或者项目经历的日期等信息推算工作年限,
+                    skills: 全文搜索并且判断应聘人的技术技能,
+                    work_experience: 全文搜索并且判断应聘人的工作经历或者实习经历,
+                    project_experience: 全文搜索并且判断应聘人的项目经历,
+        
+                    education: 全文搜索并且判断应聘人的学历,
+                    university: 全文搜索并且判断应聘人的毕业院校,
+                    degree_time: 全文搜索并且判断应聘人的毕业时间,
+                    competitions: 全文搜索并且判断应聘人的校园经历或者获奖经历,
+                    self_introduction: 全文搜索并且判断应聘人的自我评价或者自我介绍,
+                }}
+                
                 例如:
                 ```json
                 [
-                {{"name": "张三", "gender": "男", "age": 30, "work_years": 5, "work_experience": "...", "project_experience": "..."}},
-                {{"name": "李四", "gender": "女", "age": 28, "work_years": 3, "work_experience": "...", "project_experience": "..."}}
+                {{"name": "张山", "age": 18, "major": "计算机科学与技术", "phone": "12345678901", "gender": "男", "email": "zhangsan@example.com", "address": "北京", "work_years": 5, "skills": ["Python", "Java"], 
+                    "work_experience": ["百度", "阿里"], "project_experience": ["购物商城系统", "基于 YOLOV11 实现街景字符识别"], "education": "本科", "university": "清华大学", "degree_time": "2023年6月", 
+                    "competitions": ["ACM国际大学生程序设计竞赛二等奖"], "self_introduction": "热爱编程，喜欢挑战自我。"}},
+                {{"name": "李四", "age": 18, "major": "计算机科学与技术", "phone": "12345678901", "gender": "男", "email": "zhangsan@example.com", "address": "北京", "work_years": 5, "skills": ["Python", "Java"], 
+                    "work_experience": ["百度", "阿里"], "project_experience": ["购物商城系统", "基于 YOLOV11 实现街景字符识别"], "education": "本科", "university": "清华大学", "degree_time": "2023年6月", 
+                    "competitions": ["ACM国际大学生程序设计竞赛二等奖"], "self_introduction": "热爱编程，喜欢挑战自我。"}},
                 ]
                 ```
 
@@ -91,7 +114,7 @@ class ConnModel:
             
             data = {
                 # "model": "deepseek/deepseek-chat-v3-0324",
-                "model": "qwen-plus",
+                "model": MODEL_NAME,
                 "messages": [
                     {
                         "role": "system",
@@ -102,12 +125,13 @@ class ConnModel:
                         "content": prompt
                     }
                     # 可以定义结构化输出
-                ]
+                ],
+                "stream": False,
+                "response_format": {"type": "json_object"}
             }
             
             response = requests.post(
-                # "https://openrouter.ai/api/v1/chat/completions", # openrouter
-                "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions", # 阿里云百炼
+                MODEL_API_URL,
                 headers=headers,
                 json=data
             )
@@ -167,7 +191,7 @@ class ConnModel:
             }
             
             response = requests.post(
-                "http://172.23.168.104:11434/api/chat",
+                os.environ.get("SELF_MODEL_API_URL"),
                 headers=headers,
                 json=data
             )

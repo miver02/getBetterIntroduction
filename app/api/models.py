@@ -25,10 +25,6 @@ async def get_rank(
     hf = get_server_data().get("hf")
     cm = get_server_data().get("cm")
 
-    # 确保临时文件夹存在
-    err = await hf.if_exist_files()
-    if err is not None:
-        return res.ErrorResponse(code=500, message=str(err))
     # 处理上传的文件
     err = await hf.handle_files(files)
     if err is not None:
