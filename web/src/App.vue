@@ -81,10 +81,17 @@ const filteredResumes = computed(() => {
 
   const term = searchTerm.value.toLowerCase()
   return resumeData.value.filter(resume => {
+    const getSearchableText = (filed) => {
+      if (Array.isArray(filed)) {
+        return filed.join(' ')
+      }
+      return filed
+    }
     return (
       resume.name?.toLowerCase().includes(term) ||
-      resume.skills?.toLowerCase().includes(term) ||
-      resume.work_experience?.toLowerCase().includes(term)
+      getSearchableText(resume.skills)?.toLowerCase().includes(term) ||
+      getSearchableText(resume.project_experience)?.toLowerCase().includes(term) ||
+      getSearchableText(resume.work_experience)?.toLowerCase().includes(term)
     )
   })
 })
@@ -92,7 +99,7 @@ const filteredResumes = computed(() => {
 // 搜索处理函数
 const handleSearch = () => {
   // 触发重新计算 filteredResumes
-  filteredResumes.value;
+  // filteredResumes.value;
 }
 
 // 显示简历详情
