@@ -174,16 +174,16 @@ const handleSubmit = async () => {
 }
 
 /* 如果需要更精确地控制文件项的对齐方式，可以添加以下样式 */
-.upload-wrapper ::v-deep .el-upload-list {
+.upload-wrapper :deep(.el-upload-list) {
   text-align: left;
 }
 
-.upload-wrapper ::v-deep .el-upload-list__item {
+.upload-wrapper :deep(.el-upload-list__item) {
   justify-content: flex-start; /* 使文件项内容靠左对齐 */
 }
 
 /* 文件名过长处理：单行省略，防止溢出布局 */
-.upload-wrapper ::v-deep .el-upload-list__item-name {
+.upload-wrapper :deep(.el-upload-list__item-name) {
   display: flex;
   max-width: calc(100% - 20px); /* 保留图标/操作空间，按需调整 */
   white-space: nowrap;
@@ -194,7 +194,7 @@ const handleSubmit = async () => {
 
 /* 在非常窄的屏幕上允许换行以便查看完整名称（可选） */
 @media (max-width: 420px) {
-  .upload-wrapper ::v-deep .el-upload-list__item-name {
+  .upload-wrapper :deep(.el-upload-list__item-name) {
     white-space: normal;
     word-break: break-word;
     max-width: 100%;
